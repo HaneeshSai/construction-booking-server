@@ -1,0 +1,146 @@
+# ======================
+# OS & Editor Junk
+# ======================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+*.swp
+*.swo
+*.tmp
+*.bak
+*.log
+
+# VSCode / JetBrains / Other IDEs
+.vscode/
+.idea/
+*.iml
+*.sublime-workspace
+*.sublime-project
+
+# ======================
+# Dependency Folders
+# ======================
+node_modules/
+bower_components/
+vendor/
+Packages/
+*.egg-info/
+
+# ======================
+# Build & Dist
+# ======================
+dist/
+build/
+out/
+target/
+bin/
+obj/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+coverage/
+*.pyc
+*.pyo
+*.pyd
+
+# ======================
+# Env / Config
+# ======================
+.env
+.env.*
+*.local
+*.secret
+*.config
+*.cfg
+*.ini
+
+# ======================
+# Logs & Reports
+# ======================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.pid
+*.seed
+*.pid.lock
+
+# ======================
+# OS/Language Specific
+# ======================
+
+# Python
+*.egg
+*.manifest
+pip-log.txt
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# C/C++
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.out
+
+# C#
+*.exe
+*.dll
+*.pdb
+*.mdb
+
+# Go
+*.test
+*.coverprofile
+
+# Rust
+target/
+Cargo.lock
+
+# Swift / Xcode
+*.xcuserstate
+*.xcuserdata/
+*.xcworkspace
+DerivedData/
+
+# Android / Gradle
+.gradle/
+local.properties
+*.apk
+*.aab
+*.dex
+
+# iOS
+Pods/
+*.xcworkspace
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# ======================
+# Misc
+# ======================
+*.sqlite
+*.db
+*.tgz
+*.gz
+*.zip
+*.tar
+*.7z
+*.rar
+
+# ======================
+# Git Backup / Security
+# ======================
+*.orig
+*.rej

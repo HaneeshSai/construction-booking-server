@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  phone     String    @unique
+  password  String
+  fullName  String
+  addresses Address[]
+  jobs      Job[]
+  reviews   Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vendor {
+  id                String           @id @default(cuid())
+  companyName       String
+  GST               String
+  PAN               String
+  email             String           @unique
+  coordinatorName   String
+  coordinatorNumber String
+  documentType      String?
+  password          String
+  documentNumber    String?
+  documentFile      String?
+  equipment         Equipment[]
+  addresses         Address[]
+  jobApplications   JobApplication[]
+  reviews           Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  name       String
+  street     String
+  city       String
+  district   String
+  state      String
+  pincode    String
+  phone      String
+  customerId String?
+  vendorId   String?
+
+  customer Customer? @relation(fields: [customerId], references: [id])
+  vendor   Vendor?   @relation(fields: [vendorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Equipment {
+  id                 String   @id @default(cuid())
+  machineType        String
+  machineName        String
+  machineModel       String
+  ownershipType      String
+  address            String
+  name               String?
+  invoiceNumber      String
+  invoiceDate        DateTime
+  isRtoRegistered    Boolean
+  registrationNumber String?
+  rcFile             String?
+  invoiceFile        String
+  frontImageFile     String
+  sideImageFile      String
+  engineImageFile    String
+  controlPanelFile   String
+  insuranceFile      String
+  dailyPrice         Float
+  weeklyPrice        Float
+  monthlyPrice       Float
+  status             String
+  vendorId           String
+
+  vendor  Vendor   @relation(fields: [vendorId], references: [id])
+  reviews Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Job {
+  id                   String   @id @default(cuid())
+  jobType              String
+  terrainType          String
+  jobLocation          String
+  jobLocationImageFile String
+  deliveryDate         DateTime
+  timePeriod           String
+  status               String
+  customerId           String
+
+  customer     Customer         @relation(fields: [customerId], references: [id])
+  applications JobApplication[]
+  reviews      Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JobApplication {
+  id          String @id @default(cuid())
+  jobId       String
+  vendorId    String
+  vendorPrice Float
+  status      String
+
+  job    Job    @relation(fields: [jobId], references: [id])
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id          String  @id @default(cuid())
+  rating      Int
+  comment     String?
+  customerId  String
+  vendorId    String
+  equipmentId String?
+  jobId       String?
+
+  customer  Customer   @relation(fields: [customerId], references: [id])
+  vendor    Vendor     @relation(fields: [vendorId], references: [id])
+  equipment Equipment? @relation(fields: [equipmentId], references: [id])
+  job       Job?       @relation(fields: [jobId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model File {
+  id        String   @id @default(cuid())
+  key       String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
