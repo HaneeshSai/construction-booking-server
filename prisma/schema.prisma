@@ -68,7 +68,7 @@ model Equipment {
   machineModel       String
   ownershipType      String
   address            String
-  name               String?
+  nameOfManufacturer String?
   invoiceNumber      String
   invoiceDate        DateTime
   isRtoRegistered    Boolean
