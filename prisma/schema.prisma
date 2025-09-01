@@ -73,13 +73,17 @@ model Equipment {
   invoiceDate        DateTime
   isRtoRegistered    Boolean
   registrationNumber String?
+  registeredState    String
+  insuranceValidity  String
+  purchaseYear       String
+  fuelType           String
   rcFile             String?
-  invoiceFile        String
-  frontImageFile     String
-  sideImageFile      String
-  engineImageFile    String
-  controlPanelFile   String
-  insuranceFile      String
+  invoiceFile        String?
+  frontImageFile     String?
+  sideImageFile      String?
+  engineImageFile    String?
+  controlPanelFile   String?
+  insuranceFile      String?
   dailyPrice         Float
   weeklyPrice        Float
   monthlyPrice       Float

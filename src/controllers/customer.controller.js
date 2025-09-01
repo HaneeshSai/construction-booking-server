@@ -104,3 +104,46 @@ export const getDashboard = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const getMachinesByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    const machines = await prisma.equipment.findMany({
+      where: {
+        machineName: category,
+      },
+      select: {
+        frontImageFile: true,
+        machineModel: true,
+        dailyPrice: true,
+        address: true,
+        purchaseYear: true,
+        status: true,
+        id: true,
+      },
+    });
+
+    return res.status(200).json({ success: true, machines });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getMachineById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const machineDetail = await prisma.equipment.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    return res.status(200).json({ success: true, machineDetail });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
