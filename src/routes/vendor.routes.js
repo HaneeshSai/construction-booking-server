@@ -1,7 +1,10 @@
 import { Router } from "express";
 import {
   addEquipment,
+  applyToJob,
+  getJobDetails,
   getListings,
+  getMachineById,
   getVendorDashboard,
   getVendorProfile,
   loginwithpassword,
@@ -21,5 +24,11 @@ router.get("/dashboard", authenticate, getVendorDashboard);
 router.get("/profile", authenticate, getVendorProfile);
 
 router.get("/listings", authenticate, getListings);
+
+router.get("/machine/:id", getMachineById);
+
+router.get("/job-details/:jobId", authenticate, getJobDetails);
+
+router.post("/apply-to-job", authenticate, applyToJob);
 
 export default router;

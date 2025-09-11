@@ -193,14 +193,64 @@ export const getVendorDashboard = async (req, res) => {
       },
       select: {
         machineName: true,
+        machineModel: true,
         frontImageFile: true,
         machineModel: true,
         status: true,
+        address: true,
         id: true,
       },
     });
 
-    return res.status(200).json({ success: true, equipments });
+    const liveJobs = await prisma.job.findMany({
+      where: {
+        status: "ACTIVE",
+        jobLocation: {
+          in: equipments.map((e) => e.address),
+        },
+        equipement: {
+          machineName: {
+            in: equipments.map((e) => e.machineName),
+          },
+        },
+      },
+      include: {
+        equipement: {
+          select: {
+            machineModel: true,
+            machineName: true,
+          },
+        },
+        customer: {
+          select: {
+            fullName: true,
+          },
+        },
+      },
+    });
+
+    const appliedJobs = await prisma.jobApplication.findMany({
+      where: {
+        vendorId: req.user.id,
+      },
+      include: {
+        job: {
+          include: {
+            equipement: {
+              select: {
+                machineModel: true,
+                machineName: true,
+                frontImageFile: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, equipments, liveJobs, appliedJobs });
   } catch (error) {
     console.log(error);
     return res
@@ -244,6 +294,7 @@ export const getListings = async (req, res) => {
         dailyPrice: true,
         weeklyPrice: true,
         monthlyPrice: true,
+        frontImageFile: true,
         id: true,
       },
     });
@@ -254,5 +305,231 @@ export const getListings = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export const getMachineById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const machine = await prisma.equipment.findFirst({
+      where: {
+        id,
+      },
+    });
+
+    return res.status(200).json({ success: true, machine });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export const getJobDetails = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { id: vendorId } = req.user;
+
+    if (!jobId) {
+      return res.status(400).json({
+        success: false,
+        message: "Job ID is required",
+      });
+    }
+
+    // Get job details with related equipment and customer info
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      include: {
+        equipement: {
+          select: {
+            id: true,
+            machineType: true,
+            machineName: true,
+            machineModel: true,
+            ownershipType: true,
+            nameOfManufacturer: true,
+            purchaseYear: true,
+            fuelType: true,
+            frontImageFile: true,
+            sideImageFile: true,
+            engineImageFile: true,
+            controlPanelFile: true,
+            dailyPrice: true,
+            weeklyPrice: true,
+            monthlyPrice: true,
+            status: true,
+            vendor: {
+              select: {
+                id: true,
+                companyName: true,
+                coordinatorName: true,
+                coordinatorNumber: true,
+              },
+            },
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
+        address: {
+          select: {
+            id: true,
+            name: true,
+            street: true,
+            city: true,
+            district: true,
+            state: true,
+            pincode: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+
+    // Check if the vendor has already applied to this job
+    const jobApplication = await prisma.jobApplication.findFirst({
+      where: {
+        jobId: jobId,
+        vendorId: vendorId,
+      },
+      select: {
+        id: true,
+        vendorPrice: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // Get total number of applications for this job
+    const totalApplications = await prisma.jobApplication.count({
+      where: { jobId: jobId },
+    });
+
+    // Format the response
+    const response = {
+      success: true,
+      data: {
+        job: {
+          id: job.id,
+          jobType: job.jobType,
+          terrainType: job.terrainType,
+          jobLocation: job.jobLocation,
+          jobLocationImageFile: job.jobLocationImageFile,
+          deliveryDate: job.deliveryDate,
+          additionalDetails: job.additionalDetails,
+          timePeriod: job.timePeriod,
+          status: job.status,
+          createdAt: job.createdAt,
+          customer: job.customer,
+          address: job.address,
+        },
+        equipment: job.equipement,
+        hasApplied: !!jobApplication,
+        application: jobApplication,
+        totalApplications: totalApplications,
+        canApply: !jobApplication && job.status === "ACTIVE", // Assuming ACTIVE means job is open for applications
+      },
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+// Additional API endpoint for applying to job
+export const applyToJob = async (req, res) => {
+  try {
+    const { id: vendorId } = req.user;
+    const { vendorPrice, additionalNotes, jobId } = req.body;
+
+    if (!jobId || !vendorPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Job ID and vendor price are required",
+      });
+    }
+
+    // Check if job exists and is active
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      select: { id: true, status: true },
+    });
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found",
+      });
+    }
+
+    if (job.status !== "ACTIVE") {
+      return res.status(400).json({
+        success: false,
+        message: "This job is no longer accepting applications",
+      });
+    }
+
+    // Check if vendor has already applied
+    const existingApplication = await prisma.jobApplication.findFirst({
+      where: {
+        jobId: jobId,
+        vendorId: vendorId,
+      },
+    });
+
+    if (existingApplication) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already applied to this job",
+      });
+    }
+
+    // Create new job application
+    const jobApplication = await prisma.jobApplication.create({
+      data: {
+        jobId: jobId,
+        vendorId: vendorId,
+        vendorPrice: parseFloat(vendorPrice),
+        status: "PENDING",
+      },
+      select: {
+        id: true,
+        vendorPrice: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Application submitted successfully",
+      data: jobApplication,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
   }
 };
