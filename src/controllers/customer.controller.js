@@ -83,25 +83,131 @@ export const loginWithPassword = async (req, res) => {
 
 export const getDashboard = async (req, res) => {
   try {
+    // Get customer ID from request (assuming it's available in req.user or req.params)
+    const customerId = req.user?.id || req.params?.customerId;
+
+    // Get top available rentals
     const topRentals = await prisma.equipment.findMany({
       where: {
         status: "AVAILABLE",
       },
       select: {
+        id: true,
         machineType: true,
         machineModel: true,
         machineName: true,
         status: true,
-        id: true,
         frontImageFile: true,
+        dailyPrice: true,
+        weeklyPrice: true,
+        monthlyPrice: true,
+        vendor: {
+          select: {
+            companyName: true,
+            coordinatorName: true,
+          },
+        },
       },
-      take: 5,
+      take: 10,
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
-    return res.status(200).json({ success: true, topRentals });
+    // Get equipment categories with counts
+    const equipmentCategories = await prisma.equipment.groupBy({
+      by: ["machineType"],
+      where: {
+        status: "AVAILABLE",
+      },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        _count: {
+          id: "desc",
+        },
+      },
+    });
+
+    // Get customer's recent jobs if customerId is available
+    let recentJobs = [];
+    if (customerId) {
+      recentJobs = await prisma.job.findMany({
+        where: {
+          customerId: customerId,
+        },
+        select: {
+          id: true,
+          jobType: true,
+          status: true,
+          deliveryDate: true,
+          equipement: {
+            select: {
+              machineName: true,
+              machineType: true,
+              frontImageFile: true,
+            },
+          },
+          address: {
+            select: {
+              city: true,
+              district: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 5,
+      });
+    }
+
+    // Get popular equipment types
+    const popularEquipment = await prisma.equipment.findMany({
+      where: {
+        status: "AVAILABLE",
+      },
+      select: {
+        machineType: true,
+        frontImageFile: true,
+        dailyPrice: true,
+      },
+      distinct: ["machineType"],
+      take: 6,
+    });
+
+    // Get statistics for dashboard
+    const stats = await Promise.all([
+      prisma.equipment.count({ where: { status: "AVAILABLE" } }),
+      prisma.vendor.count(),
+      customerId ? prisma.job.count({ where: { customerId } }) : 0,
+      customerId ? prisma.review.count({ where: { customerId } }) : 0,
+    ]);
+
+    const dashboardData = {
+      topRentals,
+      equipmentCategories,
+      recentJobs,
+      popularEquipment,
+      stats: {
+        availableEquipment: stats[0],
+        totalVendors: stats[1],
+        customerJobs: stats[2],
+        customerReviews: stats[3],
+      },
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: dashboardData,
+    });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
