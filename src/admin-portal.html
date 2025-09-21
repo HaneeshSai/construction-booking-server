@@ -22,19 +22,31 @@
     <script type="text/babel">
       const { useState, useEffect } = React;
 
-      const API_BASE = "/api/admin/record";
+      const API_BASE = "/api/admin";
+      const DASHBOARD_API = "/api/admin/stats/dashboard";
+      const RECORDS_API = "/api/admin/record";
 
       // API service using your actual endpoints
       const api = {
         get: async (endpoint) => {
-          const response = await fetch(`${API_BASE}${endpoint}`);
+          // Special handling for dashboard stats
+          if (endpoint === "/stats/dashboard") {
+            const response = await fetch(DASHBOARD_API);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          }
+
+          // For all other model requests, use the records API
+          const response = await fetch(`${RECORDS_API}${endpoint}`);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           return response.json();
         },
         post: async (endpoint, data) => {
-          const response = await fetch(`${API_BASE}${endpoint}`, {
+          const response = await fetch(`${RECORDS_API}${endpoint}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -45,7 +57,7 @@
           return response.json();
         },
         put: async (endpoint, data) => {
-          const response = await fetch(`${API_BASE}${endpoint}`, {
+          const response = await fetch(`${RECORDS_API}${endpoint}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -56,7 +68,7 @@
           return response.json();
         },
         delete: async (endpoint) => {
-          const response = await fetch(`${API_BASE}${endpoint}`, {
+          const response = await fetch(`${RECORDS_API}${endpoint}`, {
             method: "DELETE",
           });
           if (!response.ok) {
@@ -84,14 +96,7 @@
         useEffect(() => {
           const fetchStats = async () => {
             try {
-              // const data = await api.get("/stats/dashboard");
-              const response = await fetch(`/api/admin/stats/dashboard`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-                // body: JSON.stringify(data),
-              });
-              const data = await response.json();
-              console.log(data);
+              const data = await api.get("/stats/dashboard");
               setStats(data);
             } catch (error) {
               console.error("Error fetching stats:", error);
@@ -689,10 +694,30 @@
 
         const handleSave = async (data) => {
           try {
+            // Filter out non-updatable fields
+            const cleanData = { ...data };
+
+            // Remove system fields and relations
+            delete cleanData.id;
+            delete cleanData.createdAt;
+            delete cleanData.updatedAt;
+            delete cleanData.vendor;
+            delete cleanData.customer;
+            delete cleanData.equipment;
+            delete cleanData.equipement;
+            delete cleanData.address;
+            delete cleanData.job;
+            delete cleanData.applications;
+            delete cleanData.reviews;
+            delete cleanData.addresses;
+            delete cleanData.jobs;
+            delete cleanData.jobApplications;
+            delete cleanData.Job;
+
             if (editingRecord) {
-              await api.put(`/${model}/${editingRecord.id}`, data);
+              await api.put(`/${model}/${editingRecord.id}`, cleanData);
             } else {
-              await api.post(`/${model}`, data);
+              await api.post(`/${model}`, cleanData);
             }
             setViewMode("list");
             setEditingRecord(null);
@@ -741,7 +766,7 @@
                     {model} Details
                   </h2>
                   <p className="text-gray-600 mt-1">
-                    Complete information and associated files
+                    Complete information and associated data
                   </p>
                 </div>
                 <div className="flex space-x-3">
@@ -780,6 +805,14 @@
                               "createdAt",
                               "updatedAt",
                               "password",
+                              "addresses",
+                              "jobs",
+                              "reviews",
+                              "equipment",
+                              "jobApplications",
+                              "vendor",
+                              "customer",
+                              "applications",
                             ].includes(field)
                         )
                         .map((field) => (
@@ -792,7 +825,8 @@
                             </span>
                             <span className="text-sm text-gray-900 text-right max-w-xs">
                               {field.includes("Date") && record[field]
-                                ? new Date(record[field]).toLocaleDateString()
+                                ? // {field.includes('Date') && record[field]
+                                  new Date(record[field]).toLocaleDateString()
                                 : field === "rating" && record[field]
                                 ? `${record[field]}/5 ⭐`
                                 : typeof record[field] === "boolean"
@@ -809,7 +843,7 @@
                   {fileFields.length > 0 && (
                     <div>
                       <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                        Files & Documents
+                        Documents & Files
                       </h3>
                       <div className="space-y-3">
                         {fileFields.map((field) => (
@@ -838,7 +872,9 @@
                                       .trim()}
                                   </p>
                                   <p className="text-sm text-gray-600">
-                                    {record[field].split("/").pop()}
+                                    {record[field].includes("/")
+                                      ? record[field].split("/").pop()
+                                      : record[field]}
                                   </p>
                                 </div>
                               </div>
@@ -857,54 +893,554 @@
                       </div>
                     </div>
                   )}
+                </div>
 
-                  {model === "job" && record.applications && (
-                    <div className="lg:col-span-2">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                        Job Applications
-                      </h3>
-                      {record.applications.length === 0 ? (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
-                          <i className="fas fa-inbox text-gray-400 text-3xl mb-3"></i>
-                          <p className="text-gray-600">
-                            No applications received yet
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {record.applications.map((app) => (
+                {/* Customer specific sections */}
+                {model === "customer" && (
+                  <div className="mt-8 space-y-8">
+                    {/* Customer Addresses */}
+                    {record.addresses && record.addresses.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Saved Addresses
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {record.addresses.map((address) => (
                             <div
-                              key={app.id}
+                              key={address.id}
                               className="p-4 border border-gray-200 rounded-lg"
                             >
-                              <div className="flex justify-between items-center">
-                                <div>
-                                  <p className="font-medium">
-                                    {app.vendor?.companyName}
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    Price: ₹{app.vendorPrice?.toLocaleString()}
-                                  </p>
-                                </div>
+                              <h4 className="font-medium text-gray-900 mb-2">
+                                {address.name}
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {address.street}, {address.city},{" "}
+                                {address.district}
+                                <br />
+                                {address.state} - {address.pincode}
+                                <br />
+                                Phone: {address.phone}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Customer Jobs */}
+                    {record.jobs && record.jobs.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Job History
+                        </h3>
+                        <div className="space-y-3">
+                          {record.jobs.map((job) => (
+                            <div
+                              key={job.id}
+                              className="p-4 border border-gray-200 rounded-lg"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="font-medium text-gray-900">
+                                  {job.jobType}
+                                </h4>
                                 <span
                                   className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                    app.status === "SELECTED"
+                                    job.status === "COMPLETED" ||
+                                    job.status === "APPROVED"
                                       ? "bg-green-100 text-green-800"
-                                      : app.status === "PENDING"
+                                      : job.status === "IN_PROGRESS" ||
+                                        job.status === "ACTIVE"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : job.status === "PENDING"
                                       ? "bg-yellow-100 text-yellow-800"
                                       : "bg-gray-100 text-gray-800"
                                   }`}
                                 >
-                                  {app.status}
+                                  {job.status}
                                 </span>
                               </div>
+                              <p className="text-sm text-gray-600 mb-2">
+                                <strong>Terrain:</strong> {job.terrainType} |
+                                <strong> Delivery:</strong>{" "}
+                                {new Date(
+                                  job.deliveryDate
+                                ).toLocaleDateString()}{" "}
+                                |<strong> Duration:</strong> {job.timePeriod}
+                              </p>
+                              {job.jobLocation && (
+                                <p className="text-sm text-gray-600 mb-2">
+                                  <strong>Location:</strong> {job.jobLocation}
+                                </p>
+                              )}
+                              {job.additionalDetails && (
+                                <p className="text-sm text-gray-600">
+                                  <strong>Details:</strong>{" "}
+                                  {job.additionalDetails}
+                                </p>
+                              )}
                             </div>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Customer Reviews */}
+                    {record.reviews && record.reviews.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Reviews Given
+                        </h3>
+                        <div className="space-y-3">
+                          {record.reviews.map((review) => (
+                            <div
+                              key={review.id}
+                              className="p-4 bg-gray-50 rounded-lg"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center">
+                                  <span className="text-yellow-400">
+                                    {"★".repeat(review.rating)}
+                                    {"☆".repeat(5 - review.rating)}
+                                  </span>
+                                  <span className="ml-2 text-sm text-gray-600">
+                                    ({review.rating}/5)
+                                  </span>
+                                </div>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(
+                                    review.createdAt
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                              {review.comment && (
+                                <p className="text-sm text-gray-700">
+                                  {review.comment}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Vendor specific sections */}
+                {model === "vendor" && (
+                  <div className="mt-8 space-y-8">
+                    {/* Vendor Equipment */}
+                    {record.equipment && record.equipment.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Equipment Listed
+                        </h3>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {record.equipment.map((equipment) => (
+                            <div
+                              key={equipment.id}
+                              className="p-4 border border-gray-200 rounded-lg"
+                            >
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <h4 className="font-medium text-gray-900">
+                                    {equipment.machineName}
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    {equipment.machineType} -{" "}
+                                    {equipment.machineModel}
+                                  </p>
+                                </div>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    equipment.status === "ACTIVE"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {equipment.status}
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-2 mb-3">
+                                <div className="text-center">
+                                  <p className="text-xs text-gray-500">Daily</p>
+                                  <p className="font-medium">
+                                    ₹{equipment.dailyPrice?.toLocaleString()}
+                                  </p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs text-gray-500">
+                                    Weekly
+                                  </p>
+                                  <p className="font-medium">
+                                    ₹{equipment.weeklyPrice?.toLocaleString()}
+                                  </p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs text-gray-500">
+                                    Monthly
+                                  </p>
+                                  <p className="font-medium">
+                                    ₹{equipment.monthlyPrice?.toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                <div>
+                                  <strong>Ownership:</strong>{" "}
+                                  {equipment.ownershipType}
+                                </div>
+                                <div>
+                                  <strong>Fuel:</strong> {equipment.fuelType}
+                                </div>
+                                <div>
+                                  <strong>Year:</strong>{" "}
+                                  {equipment.purchaseYear}
+                                </div>
+                                <div>
+                                  <strong>RTO:</strong>{" "}
+                                  {equipment.isRtoRegistered
+                                    ? "Registered"
+                                    : "Not Registered"}
+                                </div>
+                              </div>
+
+                              {/* Equipment Files */}
+                              {(equipment.frontImageFile ||
+                                equipment.sideImageFile ||
+                                equipment.rcFile ||
+                                equipment.invoiceFile) && (
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                  <p className="text-xs font-medium text-gray-700 mb-2">
+                                    Files:
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {equipment.frontImageFile && (
+                                      <a
+                                        href={equipment.frontImageFile}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200"
+                                      >
+                                        Front Image
+                                      </a>
+                                    )}
+                                    {equipment.sideImageFile && (
+                                      <a
+                                        href={equipment.sideImageFile}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200"
+                                      >
+                                        Side Image
+                                      </a>
+                                    )}
+                                    {equipment.rcFile && (
+                                      <a
+                                        href={equipment.rcFile}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200"
+                                      >
+                                        RC Document
+                                      </a>
+                                    )}
+                                    {equipment.invoiceFile && (
+                                      <a
+                                        href={equipment.invoiceFile}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200"
+                                      >
+                                        Invoice
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Vendor Job Applications */}
+                    {record.jobApplications &&
+                      record.jobApplications.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                            Job Applications
+                          </h3>
+                          <div className="space-y-3">
+                            {record.jobApplications.map((application) => (
+                              <div
+                                key={application.id}
+                                className="p-4 border border-gray-200 rounded-lg"
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <h4 className="font-medium text-gray-900">
+                                      {application.job?.jobType ||
+                                        "Job Details"}
+                                    </h4>
+                                    <p className="text-sm text-gray-600">
+                                      Quoted Price: ₹
+                                      {application.vendorPrice?.toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                      application.status === "SELECTED"
+                                        ? "bg-green-100 text-green-800"
+                                        : application.status === "PENDING"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {application.status}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                  Applied:{" "}
+                                  {new Date(
+                                    application.createdAt
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
-                    </div>
-                  )}
-                </div>
+
+                    {/* Vendor Addresses */}
+                    {record.addresses && record.addresses.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Business Addresses
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {record.addresses.map((address) => (
+                            <div
+                              key={address.id}
+                              className="p-4 border border-gray-200 rounded-lg"
+                            >
+                              <h4 className="font-medium text-gray-900 mb-2">
+                                {address.name}
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {address.street}, {address.city},{" "}
+                                {address.district}
+                                <br />
+                                {address.state} - {address.pincode}
+                                <br />
+                                Phone: {address.phone}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Vendor Reviews */}
+                    {record.reviews && record.reviews.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Customer Reviews
+                        </h3>
+                        <div className="space-y-3">
+                          {record.reviews.map((review) => (
+                            <div
+                              key={review.id}
+                              className="p-4 bg-gray-50 rounded-lg"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center">
+                                  <span className="text-yellow-400">
+                                    {"★".repeat(review.rating)}
+                                    {"☆".repeat(5 - review.rating)}
+                                  </span>
+                                  <span className="ml-2 text-sm text-gray-600">
+                                    ({review.rating}/5)
+                                  </span>
+                                </div>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(
+                                    review.createdAt
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                              {review.comment && (
+                                <p className="text-sm text-gray-700 mb-2">
+                                  {review.comment}
+                                </p>
+                              )}
+                              {review.customer && (
+                                <p className="text-xs text-gray-500">
+                                  By: {review.customer.fullName}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Job specific sections */}
+                {model === "job" && (
+                  <div className="mt-8 space-y-8">
+                    {/* Job Customer Info */}
+                    {record.customer && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Customer Details
+                        </h3>
+                        <div className="p-4 bg-blue-50 rounded-lg">
+                          <div className="flex items-center">
+                            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                              {record.customer.fullName?.charAt(0) || "C"}
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-900">
+                                {record.customer.fullName}
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {record.customer.email}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {record.customer.phone}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Job Address Info */}
+                    {record.address && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Job Address
+                        </h3>
+                        <div className="p-4 border border-gray-200 rounded-lg">
+                          <h4 className="font-medium text-gray-900 mb-2">
+                            {record.address.name}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {record.address.street}, {record.address.city},{" "}
+                            {record.address.district}
+                            <br />
+                            {record.address.state} - {record.address.pincode}
+                            <br />
+                            Phone: {record.address.phone}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Job Equipment Info */}
+                    {record.equipement && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Required Equipment
+                        </h3>
+                        <div className="p-4 border border-gray-200 rounded-lg">
+                          <h4 className="font-medium text-gray-900 mb-2">
+                            {record.equipement.machineName}
+                          </h4>
+                          <p className="text-sm text-gray-600 mb-2">
+                            {record.equipement.machineType} -{" "}
+                            {record.equipement.machineModel}
+                          </p>
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500">Daily Rate:</span>
+                              <span className="font-medium ml-1">
+                                ₹
+                                {record.equipement.dailyPrice?.toLocaleString()}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">
+                                Weekly Rate:
+                              </span>
+                              <span className="font-medium ml-1">
+                                ₹
+                                {record.equipement.weeklyPrice?.toLocaleString()}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">
+                                Monthly Rate:
+                              </span>
+                              <span className="font-medium ml-1">
+                                ₹
+                                {record.equipement.monthlyPrice?.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Job Applications */}
+                    {record.applications && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          Vendor Applications
+                        </h3>
+                        {record.applications.length === 0 ? (
+                          <div className="text-center py-8 bg-gray-50 rounded-lg">
+                            <i className="fas fa-inbox text-gray-400 text-3xl mb-3"></i>
+                            <p className="text-gray-600">
+                              No applications received yet
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {record.applications.map((app) => (
+                              <div
+                                key={app.id}
+                                className="p-4 border border-gray-200 rounded-lg"
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-medium text-gray-900">
+                                      {app.vendor?.companyName}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      Quoted Price: ₹
+                                      {app.vendorPrice?.toLocaleString()}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      Applied:{" "}
+                                      {new Date(
+                                        app.createdAt
+                                      ).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                      app.status === "SELECTED"
+                                        ? "bg-green-100 text-green-800"
+                                        : app.status === "PENDING"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {app.status}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
