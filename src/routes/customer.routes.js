@@ -47,7 +47,7 @@ router.get(
   getBookingDetailsWithVendor
 );
 
-router.post("/accept-application", acceptApplication);
+router.post("/accept-application",authenticate, acceptApplication);
 
 router.get("/profile", authenticate, getProfile);
 

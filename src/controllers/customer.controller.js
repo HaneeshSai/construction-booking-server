@@ -64,7 +64,7 @@ export const loginWithPassword = async (req, res) => {
 
     if (!match) {
       console.log("incorrect password");
-      return res.status(500).json({
+      return res.status(401).json({
         success: false,
         message: "Incorrect Password",
       });
@@ -74,7 +74,7 @@ export const loginWithPassword = async (req, res) => {
 
     return res
       .status(200)
-      .json({ success: false, message: "Login Successfull", token, user });
+      .json({ success: true, message: "Login Successfull", token, user });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ success: false, message: error.message });
@@ -289,7 +289,7 @@ export const addAddress = async (req, res) => {
 
     return res
       .status(200)
-      .json({ success: true, message: "Added Successfully" });
+      .json({ success: true, message: "Added Successfully", addressId: newAddress.id });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ success: false, message: error.message });
@@ -307,7 +307,7 @@ export const updateAddress = async (req, res) => {
     // First check if the address belongs to the user
     const existingAddress = await prisma.address.findFirst({
       where: {
-        id: parseInt(addressId),
+        id: addressId,
         customerId: id,
       },
     });
@@ -321,7 +321,7 @@ export const updateAddress = async (req, res) => {
 
     const updatedAddress = await prisma.address.update({
       where: {
-        id: parseInt(addressId),
+        id: addressId,
       },
       data: {
         name: address.name,
@@ -427,7 +427,7 @@ export const createJob = async (req, res) => {
 
     return res
       .status(200)
-      .json({ success: true, message: "Job Added Successfully" });
+      .json({ success: true, message: "Job Added Successfully", jobId: newJob.id });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ success: false, message: error.message });
@@ -556,11 +556,11 @@ export const getAllBookings = async (req, res) => {
         averagePrice:
           job.applications.length > 0
             ? Math.round(
-                job.applications.reduce(
-                  (sum, app) => sum + app.vendorPrice,
-                  0
-                ) / job.applications.length
-              )
+              job.applications.reduce(
+                (sum, app) => sum + app.vendorPrice,
+                0
+              ) / job.applications.length
+            )
             : null,
       },
     }));
@@ -819,7 +819,7 @@ export const getBookingDetailsWithVendor = async (req, res) => {
         ),
         averagePrice: Math.round(
           booking.applications.reduce((sum, app) => sum + app.vendorPrice, 0) /
-            booking.applications.length
+          booking.applications.length
         ),
       },
 
@@ -864,7 +864,7 @@ export const acceptApplication = async (req, res) => {
 
     return res
       .status(200)
-      .json({ success: true, message: "Applied successfully" });
+      .json({ success: true, message: "Applied successfully", application });
   } catch (error) {
     console.log("Error Fetching Booking details with vendor", error);
     return res.status(500).json({
@@ -956,11 +956,11 @@ export const getProfile = async (req, res) => {
     const averageRating =
       totalReviews > 0
         ? (
-            userProfile.reviews.reduce(
-              (sum, review) => sum + review.rating,
-              0
-            ) / totalReviews
-          ).toFixed(1)
+          userProfile.reviews.reduce(
+            (sum, review) => sum + review.rating,
+            0
+          ) / totalReviews
+        ).toFixed(1)
         : 0;
 
     // Prepare response data

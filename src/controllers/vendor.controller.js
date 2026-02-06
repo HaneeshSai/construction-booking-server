@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prismaClient.js";
 import { generateToken } from "../utils/jwt.js";
-const salt = process.env.BCRYPT_SALT;
+const salt = parseInt(process.env.BCRYPT_SALT) || 10;
 
 export const registerVendor = async (req, res) => {
   try {
@@ -62,25 +62,43 @@ export const registerVendor = async (req, res) => {
 export const loginwithpassword = async (req, res) => {
   try {
     const { email, phone, password } = req.body;
+    // Trim email and password to remove extra spaces
+    const trimmedEmail = email?.trim();
+    const trimmedPassword = password?.trim();
+
+    if (trimmedPassword !== password) {
+      console.log("⚠️  Password had extra spaces - trimmed");
+    }
+
+
+
+    // ✅ FIX: Build query conditions dynamically - only search by phone if it's provided
+    const whereConditions = [];
+    if (trimmedEmail) {
+      whereConditions.push({ email: trimmedEmail });
+    }
+    if (phone && phone.trim() !== "") {
+      whereConditions.push({ coordinatorNumber: phone });
+    }
 
     const user = await prisma.vendor.findFirst({
       where: {
-        OR: [{ email: email }, { coordinatorNumber: phone }],
+        OR: whereConditions.length > 0 ? whereConditions : [{ email: trimmedEmail }],
       },
     });
 
     if (!user) {
-      console.log("User not found");
+      console.log("❌ User not found");
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(trimmedPassword, user.password);
 
     if (!match) {
-      console.log("Incorrect Password");
-      return res.status(500).json({
+      console.log("❌ Incorrect Password");
+      return res.status(401).json({
         success: false,
         message: "Incorrect Password",
       });
@@ -88,11 +106,12 @@ export const loginwithpassword = async (req, res) => {
 
     const token = generateToken({ id: user.id });
 
+    console.log("✅ Login successful");
     return res
       .status(200)
-      .json({ success: false, message: "Login Successfull", token, user });
+      .json({ success: true, message: "Login Successfull", token, user });
   } catch (error) {
-    console.log(error);
+    console.log("❌ Login error:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -195,23 +214,32 @@ export const getVendorDashboard = async (req, res) => {
         machineName: true,
         machineModel: true,
         frontImageFile: true,
-        machineModel: true,
         status: true,
         address: true,
         id: true,
       },
     });
 
+    // Get all jobs that the vendor has already applied to
+    const appliedJobIds = await prisma.jobApplication.findMany({
+      where: {
+        vendorId: req.user.id,
+      },
+      select: {
+        jobId: true,
+      },
+    });
+
+    const appliedJobIdsSet = new Set(appliedJobIds.map((app) => app.jobId));
+
+    // Get live jobs that are active/pending and vendor hasn't applied to yet
     const liveJobs = await prisma.job.findMany({
       where: {
-        status: "ACTIVE",
-        jobLocation: {
-          in: equipments.map((e) => e.address),
+        status: {
+          in: ["ACTIVE", "PENDING"], // Show both ACTIVE and PENDING jobs
         },
-        equipement: {
-          machineName: {
-            in: equipments.map((e) => e.machineName),
-          },
+        id: {
+          notIn: Array.from(appliedJobIdsSet), // Exclude jobs already applied to
         },
       },
       include: {
@@ -219,14 +247,28 @@ export const getVendorDashboard = async (req, res) => {
           select: {
             machineModel: true,
             machineName: true,
+            machineType: true,
+            frontImageFile: true,
           },
         },
         customer: {
           select: {
             fullName: true,
+            email: true,
+          },
+        },
+        address: {
+          select: {
+            city: true,
+            district: true,
+            state: true,
           },
         },
       },
+      orderBy: {
+        createdAt: "desc", // Show newest jobs first
+      },
+      take: 20, // Limit to 20 most recent jobs
     });
 
     const appliedJobs = await prisma.jobApplication.findMany({

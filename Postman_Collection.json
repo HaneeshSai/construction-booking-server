@@ -1,0 +1,784 @@
+{
+    "info": {
+        "name": "Construction Booking Server API",
+        "description": "Complete API collection for testing Customer and Vendor endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:4000",
+            "type": "string"
+        },
+        {
+            "key": "customerToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "vendorToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "addressId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "equipmentId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "jobId",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Customer APIs",
+            "item": [
+                {
+                    "name": "Register Customer",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set('customerToken', jsonData.token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"9876543210\",\n  \"fullName\": \"John Doe\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "register"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Login Customer",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set('customerToken', jsonData.token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/loginwithpassword",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "loginwithpassword"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/getdashboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "getdashboard"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Address",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// Note: API doesn't return address ID, you'll need to get it from Get Addresses endpoint"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"address\": {\n    \"name\": \"Home\",\n    \"street\": \"123 MG Road\",\n    \"city\": \"Bangalore\",\n    \"district\": \"Bangalore Urban\",\n    \"state\": \"Karnataka\",\n    \"pincode\": \"560001\",\n    \"phone\": \"9876543210\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/address",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "address"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Addresses",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/addresses",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "addresses"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Address",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"address\": {\n    \"name\": \"Home (Updated)\",\n    \"street\": \"123 MG Road, Apt 5B\",\n    \"city\": \"Bangalore\",\n    \"district\": \"Bangalore Urban\",\n    \"state\": \"Karnataka\",\n    \"pincode\": \"560001\",\n    \"phone\": \"9876543210\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/address/{{addressId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "address",
+                                "{{addressId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Address",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/address/{{addressId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "address",
+                                "{{addressId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Job",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "// Note: API doesn't return job ID, you'll need to get it from Get Bookings endpoint"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"jobType\": \"Excavation\",\n  \"terrainType\": \"Rocky\",\n  \"jobLocationImageFile\": \"https://example.com/site-image.jpg\",\n  \"deliveryDate\": \"2026-02-15T10:00:00.000Z\",\n  \"additionalDetails\": \"Need excavator for foundation work. Site has rocky terrain.\",\n  \"addressId\": \"{{addressId}}\",\n  \"equipmentId\": \"{{equipmentId}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/job",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "job"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get All Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/bookings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "bookings"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Booking Details with Vendor",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/booking-detail/{{jobId}}/VENDOR_ID_HERE",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "booking-detail",
+                                "{{jobId}}",
+                                "VENDOR_ID_HERE"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Accept Application",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"id\": \"APPLICATION_ID_HERE\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/accept-application",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "accept-application"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{customerToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/profile",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "profile"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Machines by Category",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/get-machines-by-category/Excavator",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "get-machines-by-category",
+                                "Excavator"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Machine by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/customer/get-machine-by-id/{{equipmentId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "get-machine-by-id",
+                                "{{equipmentId}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Vendor APIs",
+            "item": [
+                {
+                    "name": "Register Vendor",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set('vendorToken', jsonData.token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"companyName\": \"ABC Construction Equipment Pvt Ltd\",\n  \"GST\": \"29ABCDE1234F1Z5\",\n  \"PAN\": \"ABCDE1234F\",\n  \"email\": \"vendor@abcequipment.com\",\n  \"coordinatorName\": \"Rajesh Kumar\",\n  \"coordinatorNumber\": \"9123456780\",\n  \"password\": \"vendorPass123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "register"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Login Vendor",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set('vendorToken', jsonData.token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"vendor@abcequipment.com\",\n  \"password\": \"vendorPass123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/loginwithpassword",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "loginwithpassword"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Equipment - Excavator",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{vendorToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"data\": {\n    \"machineType\": \"Excavator\",\n    \"machineName\": \"Hydraulic Excavator\",\n    \"machineModel\": \"CAT 320D\",\n    \"ownershipType\": \"Owned\",\n    \"address\": \"Bangalore, Karnataka\",\n    \"nameOfManufacturer\": \"Caterpillar\",\n    \"invoiceNumber\": \"INV-2024-001\",\n    \"invoiceDate\": \"2024-01-15T00:00:00.000Z\",\n    \"isRtoRegistered\": true,\n    \"registrationNumber\": \"KA-01-AB-1234\",\n    \"registeredState\": \"Karnataka\",\n    \"insuranceValidity\": \"2026-12-31\",\n    \"purchaseYear\": \"2024\",\n    \"fuelType\": \"Diesel\",\n    \"rcFile\": \"https://example.com/rc-file.pdf\",\n    \"invoiceFile\": \"https://example.com/invoice.pdf\",\n    \"frontImageFile\": \"https://example.com/excavator-front.jpg\",\n    \"sideImageFile\": \"https://example.com/excavator-side.jpg\",\n    \"engineImageFile\": \"https://example.com/excavator-engine.jpg\",\n    \"controlPanelFile\": \"https://example.com/excavator-panel.jpg\",\n    \"insuranceFile\": \"https://example.com/insurance.pdf\",\n    \"dailyPrice\": 15000,\n    \"weeklyPrice\": 90000,\n    \"monthlyPrice\": 350000\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/add-equipment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "add-equipment"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Equipment - Bulldozer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{vendorToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"data\": {\n    \"machineType\": \"Bulldozer\",\n    \"machineName\": \"Track Bulldozer\",\n    \"machineModel\": \"Komatsu D65PX\",\n    \"ownershipType\": \"Owned\",\n    \"address\": \"Mumbai, Maharashtra\",\n    \"nameOfManufacturer\": \"Komatsu\",\n    \"invoiceNumber\": \"INV-2024-002\",\n    \"invoiceDate\": \"2024-03-20T00:00:00.000Z\",\n    \"isRtoRegistered\": true,\n    \"registrationNumber\": \"MH-02-CD-5678\",\n    \"registeredState\": \"Maharashtra\",\n    \"insuranceValidity\": \"2027-03-20\",\n    \"purchaseYear\": \"2024\",\n    \"fuelType\": \"Diesel\",\n    \"rcFile\": \"https://example.com/bulldozer-rc.pdf\",\n    \"invoiceFile\": \"https://example.com/bulldozer-invoice.pdf\",\n    \"frontImageFile\": \"https://example.com/bulldozer-front.jpg\",\n    \"sideImageFile\": \"https://example.com/bulldozer-side.jpg\",\n    \"engineImageFile\": \"https://example.com/bulldozer-engine.jpg\",\n    \"controlPanelFile\": \"https://example.com/bulldozer-panel.jpg\",\n    \"insuranceFile\": \"https://example.com/bulldozer-insurance.pdf\",\n    \"dailyPrice\": 18000,\n    \"weeklyPrice\": 110000,\n    \"monthlyPrice\": 420000\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/add-equipment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "add-equipment"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Equipment - Crane",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{vendorToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"data\": {\n    \"machineType\": \"Crane\",\n    \"machineName\": \"Mobile Crane\",\n    \"machineModel\": \"TATA LT 1090\",\n    \"ownershipType\": \"Leased\",\n    \"address\": \"Delhi, NCR\",\n    \"nameOfManufacturer\": \"TATA\",\n    \"invoiceNumber\": \"INV-2024-003\",\n    \"invoiceDate\": \"2024-05-10T00:00:00.000Z\",\n    \"isRtoRegistered\": true,\n    \"registrationNumber\": \"DL-03-EF-9012\",\n    \"registeredState\": \"Delhi\",\n    \"insuranceValidity\": \"2027-05-10\",\n    \"purchaseYear\": \"2024\",\n    \"fuelType\": \"Diesel\",\n    \"rcFile\": \"https://example.com/crane-rc.pdf\",\n    \"invoiceFile\": \"https://example.com/crane-invoice.pdf\",\n    \"frontImageFile\": \"https://example.com/crane-front.jpg\",\n    \"sideImageFile\": \"https://example.com/crane-side.jpg\",\n    \"engineImageFile\": \"https://example.com/crane-engine.jpg\",\n    \"controlPanelFile\": \"https://example.com/crane-panel.jpg\",\n    \"insuranceFile\": \"https://example.com/crane-insurance.pdf\",\n    \"dailyPrice\": 25000,\n    \"weeklyPrice\": 150000,\n    \"monthlyPrice\": 580000\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/add-equipment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "add-equipment"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Vendor Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{vendorToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/dashboard",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "dashboard"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Vendor Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{vendorToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/profile",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "profile"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Listings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{vendorToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/listings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "listings"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Machine by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/machine/{{equipmentId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "machine",
+                                "{{equipmentId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Job Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{vendorToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/job-details/{{jobId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "job-details",
+                                "{{jobId}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Apply to Job",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{vendorToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"jobId\": \"{{jobId}}\",\n  \"vendorPrice\": 14500,\n  \"additionalNotes\": \"We can provide the equipment with experienced operator\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/vendor/apply-to-job",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "vendor",
+                                "apply-to-job"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Common APIs",
+            "item": [
+                {
+                    "name": "Get Upload URL",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"fileName\": \"excavator-front.jpg\",\n  \"fileType\": \"image/jpeg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/common/upload-file",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "common",
+                                "upload-file"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Health Check",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/health",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "health"
+                    ]
+                }
+            }
+        }
+    ]
+}
