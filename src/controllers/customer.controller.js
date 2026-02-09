@@ -164,18 +164,25 @@ export const getDashboard = async (req, res) => {
     }
 
     // Get popular equipment types
-    const popularEquipment = await prisma.equipment.findMany({
-      where: {
-        status: "AVAILABLE",
-      },
-      select: {
-        machineType: true,
-        frontImageFile: true,
-        dailyPrice: true,
-      },
-      distinct: ["machineType"],
-      take: 6,
-    });
+    // Get popular equipment types (with error handling)
+    let popularEquipment = [];
+    try {
+      popularEquipment = await prisma.equipment.findMany({
+        where: {
+          status: "AVAILABLE",
+        },
+        select: {
+          machineType: true,
+          frontImageFile: true,
+          dailyPrice: true,
+        },
+        distinct: ["machineType"],
+        take: 6,
+      });
+    } catch (err) {
+      console.warn("Failed to fetch popular equipment:", err.message);
+      // Fallback or empty array
+    }
 
     // Get statistics for dashboard
     const stats = await Promise.all([
@@ -215,9 +222,15 @@ export const getMachinesByCategory = async (req, res) => {
   try {
     const { category } = req.params;
 
+    // Debug: Log what we are looking for
+    console.log(`Getting machines for category (machineName): ${category}`);
+
     const machines = await prisma.equipment.findMany({
       where: {
-        machineName: category,
+        machineName: {
+          equals: category,
+          mode: "insensitive",
+        },
       },
       select: {
         frontImageFile: true,

@@ -155,7 +155,7 @@ export const addEquipment = async (req, res) => {
       dailyPrice,
       weeklyPrice,
       monthlyPrice,
-    } = req.body.data;
+    } = req.body;
 
     // ✅ Create new equipment
     const newEquipment = await prisma.equipment.create({
