@@ -19,6 +19,8 @@ export const getUploadUrl = async (req, res) => {
     const fileExtension = fileName.split('.').pop();
     const uniqueFileName = `${uuidv4()}.${fileExtension}`;
 
+
+
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET,
       Key: uniqueFileName,

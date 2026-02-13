@@ -10,9 +10,10 @@ datasource db {
 model Customer {
   id        String    @id @default(cuid())
   email     String    @unique
-  phone     String    @unique
+  phone     String?   @unique
   password  String
   fullName  String
+  googleId  String?   @unique
   addresses Address[]
   jobs      Job[]
   reviews   Review[]
@@ -33,6 +34,7 @@ model Vendor {
   password          String
   documentNumber    String?
   documentFile      String?
+  googleId          String?          @unique
   equipment         Equipment[]
   addresses         Address[]
   jobApplications   JobApplication[]

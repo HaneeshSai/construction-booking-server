@@ -115,6 +115,75 @@ export const loginwithpassword = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+export const loginWithGoogle = async (req, res) => {
+  try {
+    const { email, googleId, fullName } = req.body;
+
+    if (!email || !googleId) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and Google ID are required",
+      });
+    }
+
+    // Check if vendor exists
+    let vendor = await prisma.vendor.findUnique({
+      where: { email },
+    });
+
+    if (vendor) {
+      // Vendor exists - check if profile is complete
+      if (!vendor.googleId) {
+        vendor = await prisma.vendor.update({
+          where: { id: vendor.id },
+          data: { googleId },
+        });
+      }
+
+      // Check if vendor has completed company details
+      const isProfileComplete = vendor.companyName && vendor.GST && vendor.PAN;
+
+      const token = generateToken({ id: vendor.id });
+
+      return res.status(200).json({
+        success: true,
+        message: "Login Successful",
+        token,
+        user: vendor,
+        needsCompanyDetails: !isProfileComplete,
+      });
+    } else {
+      // New vendor - needs to complete company details
+      // Create partial vendor account
+      vendor = await prisma.vendor.create({
+        data: {
+          email,
+          googleId,
+          coordinatorName: fullName || "Google User",
+          coordinatorNumber: "",
+          companyName: "",
+          GST: "",
+          PAN: "",
+          password: "",
+        },
+      });
+
+      const token = generateToken({ id: vendor.id });
+
+      return res.status(200).json({
+        success: true,
+        message: "Account created. Please complete your company details.",
+        token,
+        user: vendor,
+        needsCompanyDetails: true,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 export const addEquipment = async (req, res) => {
   try {

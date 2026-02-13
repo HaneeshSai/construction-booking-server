@@ -80,6 +80,57 @@ export const loginWithPassword = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+export const loginWithGoogle = async (req, res) => {
+  try {
+    const { email, googleId, fullName } = req.body;
+
+    if (!email || !googleId) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and Google ID are required",
+      });
+    }
+
+    // Check if user exists
+    let user = await prisma.customer.findUnique({
+      where: { email },
+    });
+
+    if (user) {
+      // Update googleId if not set
+      if (!user.googleId) {
+        user = await prisma.customer.update({
+          where: { id: user.id },
+          data: { googleId },
+        });
+      }
+    } else {
+      // Create new user with Google account
+      user = await prisma.customer.create({
+        data: {
+          email,
+          fullName: fullName || "Google User",
+          googleId,
+          phone: "", // Will be updated later
+          password: "", // No password for OAuth users
+        },
+      });
+    }
+
+    const token = generateToken({ id: user.id });
+
+    return res.status(200).json({
+      success: true,
+      message: "Login Successful",
+      token,
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 export const getDashboard = async (req, res) => {
   try {

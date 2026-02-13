@@ -12,6 +12,7 @@ import {
   getMachinesByCategory,
   getProfile,
   loginWithPassword,
+  loginWithGoogle,
   registerCustomer,
   updateAddress,
 } from "../controllers/customer.controller.js";
@@ -22,6 +23,8 @@ const router = Router();
 router.post("/register", registerCustomer);
 
 router.post("/loginwithpassword", loginWithPassword);
+
+router.post("/loginwithgoogle", loginWithGoogle);
 
 router.get("/getdashboard", getDashboard);
 
