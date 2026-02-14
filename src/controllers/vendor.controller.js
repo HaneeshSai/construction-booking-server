@@ -106,10 +106,21 @@ export const loginwithpassword = async (req, res) => {
 
     const token = generateToken({ id: user.id });
 
+    // Check if vendor has completed profile (company details)
+    const needsCompanyDetails = !user.companyName || !user.GST || !user.PAN;
+    const needsDocuments = !user.documentType || !user.documentNumber || !user.documentFile;
+
     console.log("✅ Login successful");
     return res
       .status(200)
-      .json({ success: true, message: "Login Successfull", token, user });
+      .json({ 
+        success: true, 
+        message: "Login Successfull", 
+        token, 
+        user,
+        needsCompanyDetails,
+        needsDocuments
+      });
   } catch (error) {
     console.log("❌ Login error:", error);
     return res.status(500).json({ success: false, message: error.message });
@@ -372,6 +383,15 @@ export const getVendorDashboard = async (req, res) => {
 
 export const getVendorProfile = async (req, res) => {
   try {
+    console.log("getVendorProfile - req.user:", req.user);
+    
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "User not authenticated or user ID missing" 
+      });
+    }
+
     const profile = await prisma.vendor.findUnique({
       where: {
         id: req.user.id,
@@ -381,12 +401,19 @@ export const getVendorProfile = async (req, res) => {
       },
     });
 
+    if (!profile) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Vendor profile not found" 
+      });
+    }
+
     return res.status(200).json({ success: true, profile });
   } catch (error) {
-    console.log(error);
+    console.error("getVendorProfile error:", error);
     return res
       .status(500)
-      .json({ success: false, message: "Something went wrong" });
+      .json({ success: false, message: error.message || "Something went wrong" });
   }
 };
 
@@ -641,6 +668,41 @@ export const applyToJob = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Something went wrong",
+    });
+  }
+};
+
+export const uploadDocuments = async (req, res) => {
+  try {
+    const { documentType, documentNumber, documentFile } = req.body;
+
+    if (!documentType || !documentNumber || !documentFile) {
+      return res.status(400).json({
+        success: false,
+        message: "Document type, number, and file are required",
+      });
+    }
+
+    // Update vendor with document details
+    const updatedVendor = await prisma.vendor.update({
+      where: { id: req.user.id },
+      data: {
+        documentType,
+        documentNumber,
+        documentFile,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Documents uploaded successfully",
+      user: updatedVendor,
+    });
+  } catch (error) {
+    console.error("Upload Documents Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to upload documents",
     });
   }
 };

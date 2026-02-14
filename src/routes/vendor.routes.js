@@ -10,6 +10,7 @@ import {
   loginwithpassword,
   loginWithGoogle,
   registerVendor,
+  uploadDocuments,
 } from "../controllers/vendor.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 
@@ -18,6 +19,8 @@ const router = Router();
 router.post("/register", registerVendor);
 router.post("/loginwithpassword", loginwithpassword);
 router.post("/loginwithgoogle", loginWithGoogle);
+
+router.post("/upload-documents", authenticate, uploadDocuments);
 
 router.post("/add-equipment", authenticate, addEquipment);
 

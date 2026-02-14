@@ -26,7 +26,7 @@ router.post("/loginwithpassword", loginWithPassword);
 
 router.post("/loginwithgoogle", loginWithGoogle);
 
-router.get("/getdashboard", getDashboard);
+router.get("/getdashboard", authenticate, getDashboard);
 
 router.get("/get-machines-by-category/:category", getMachinesByCategory);
 
